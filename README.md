@@ -1,6 +1,6 @@
 # RNATools
 
-Library for RNA encoding and processing. Sequences are embedded with [RiNALMo](https://huggingface.co/multimolecule/rinalmo-giga).
+Library for RNA encoding and processing. Sequences can be embedded with [RiNALMo](https://huggingface.co/multimolecule/rinalmo-giga) or counted as k-mers.
 
 ## Install
 
@@ -19,7 +19,11 @@ pytest
 
 ### From the command line
 
-`rnatools-rinalmo` reads a FASTA file, drops duplicate sequences, and writes a compressed `.npz` with `ids`, `sequences`, and `embeddings`.
+Both commands read a FASTA file and drop duplicate sequences.
+
+#### `rnatools-rinalmo`
+
+Writes a compressed `.npz` with `ids`, `sequences`, and `embeddings`.
 
 ```bash
 rnatools-rinalmo sequences.fasta -o embeddings.npz
@@ -34,13 +38,22 @@ data = np.load("embeddings.npz")
 data["ids"], data["sequences"], data["embeddings"]
 ```
 
-`rnatools-kmers` counts k-mers of size `-k` and writes `ids`, `sequences`, `kmers`, and `counts`.
+#### `rnatools-kmers`
+
+Counts k-mers of size `-k` with `CountVectorizer`. `T` is replaced with `U`. The `.npz` contains `ids`, `sequences`, `kmers`, and `counts`.
 
 ```bash
 rnatools-kmers sequences.fasta -k 3 -o counts.npz
 ```
 
 By default the output is `<fasta>.k<k>.npz`.
+
+```python
+import numpy as np
+
+data = np.load("counts.npz")
+data["ids"], data["sequences"], data["kmers"], data["counts"]
+```
 
 ### Encode a FASTA file
 
@@ -81,4 +94,9 @@ from rnatools import KmerEncoder
 counts = KmerEncoder(k=3).transform(["ACGUACGU", "GGGGCCCC"])
 ```
 
-The same encoding is available as `rnatools-kmers`.
+From the command line, use `rnatools-kmers`.
+
+## Author
+
+Gabriel Cabas (AGENslab).
+
