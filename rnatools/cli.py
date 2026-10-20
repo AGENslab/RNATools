@@ -4,8 +4,28 @@ from pathlib import Path
 
 import numpy as np
 
-from rnatools.fasta import load_fasta
+from rnatools.fasta import encode_fasta
 from rnatools.kmer import KmerEncoder
+
+
+def _require_fasta(parser, fasta):
+    if not fasta.is_file():
+        parser.error(f"FASTA file not found: {fasta}")
+
+
+def _output_path(fasta, output, suffix):
+    path = output or fasta.with_suffix(suffix)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    return path
+
+
+def _save(path, sequences, **arrays):
+    np.savez_compressed(
+        path,
+        ids=np.asarray(sequences["id"], dtype=str),
+        sequences=np.asarray(sequences["sequence"], dtype=str),
+        **{name: np.asarray(values) for name, values in arrays.items()},
+    )
 
 
 def main(argv=None):
@@ -31,27 +51,15 @@ def main(argv=None):
 
     if args.batch_size < 1:
         parser.error("--batch-size must be at least 1")
-    if not args.fasta.is_file():
-        parser.error(f"FASTA file not found: {args.fasta}")
+    _require_fasta(parser, args.fasta)
 
-    from rnatools.processing import Preprocess
+    from rnatools.processing import FeatureExtractor
 
-    output = args.output or args.fasta.with_suffix(".rinalmo.npz")
-    output.parent.mkdir(parents=True, exist_ok=True)
-
-    preprocess = Preprocess(
-        args.fasta,
-        batch_size=args.batch_size,
-        model_name=args.model_name,
-    )
-    matrix = preprocess.transform()
-    np.savez_compressed(
-        output,
-        ids=np.asarray(preprocess.df["id"], dtype=str),
-        sequences=np.asarray(matrix[:, 0], dtype=str),
-        embeddings=np.asarray(matrix[:, 1:], dtype=np.float32),
-    )
-    print(f"Encoded {len(preprocess.df)} sequences to {output}")
+    output = _output_path(args.fasta, args.output, ".rinalmo.npz")
+    encoder = FeatureExtractor(model_name=args.model_name, batch_size=args.batch_size)
+    sequences, embeddings = encode_fasta(args.fasta, encoder)
+    _save(output, sequences, embeddings=np.asarray(embeddings, dtype=np.float32))
+    print(f"Encoded {len(sequences)} sequences to {output}")
     return 0
 
 
@@ -71,21 +79,17 @@ def kmers(argv=None):
     )
     args = parser.parse_args(argv)
 
-    if not args.fasta.is_file():
-        parser.error(f"FASTA file not found: {args.fasta}")
+    _require_fasta(parser, args.fasta)
     try:
         encoder = KmerEncoder(args.k)
     except ValueError as exc:
         parser.error(str(exc))
 
-    output = args.output or args.fasta.with_suffix(f".k{args.k}.npz")
-    output.parent.mkdir(parents=True, exist_ok=True)
-    sequences = load_fasta(args.fasta)
-    counts = encoder.transform(sequences["sequence"])
-    np.savez_compressed(
+    output = _output_path(args.fasta, args.output, f".k{args.k}.npz")
+    sequences, counts = encode_fasta(args.fasta, encoder)
+    _save(
         output,
-        ids=np.asarray(sequences["id"], dtype=str),
-        sequences=np.asarray(sequences["sequence"], dtype=str),
+        sequences,
         kmers=np.asarray(encoder.vectorizer.get_feature_names_out(), dtype=str),
         counts=counts,
     )

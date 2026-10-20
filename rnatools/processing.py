@@ -4,7 +4,7 @@ import torch
 from multimolecule import RnaTokenizer, RiNALMoModel
 from tqdm import tqdm
 
-from rnatools.fasta import load_fasta
+from rnatools.fasta import encode_fasta
 
 class FeatureExtractor:
     """Extract embeddings from RNA sequences using the RiNALMo model."""
@@ -38,8 +38,7 @@ class Preprocess:
 
     def transform(self):
         """Encode FASTA sequences into a feature matrix."""
-        self.df = load_fasta(self.fasta_path)
-        embeddings = self.feature_extractor.transform(self.df["sequence"])
+        self.df, embeddings = encode_fasta(self.fasta_path, self.feature_extractor)
         X = np.empty((len(self.df), 1 + embeddings.shape[1]), dtype=object)
         X[:, 0] = self.df["sequence"].to_numpy()
         X[:, 1:] = embeddings
