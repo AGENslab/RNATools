@@ -1,10 +1,10 @@
 """Module for preprocessing RNA sequences for machine learning models."""
 import numpy as np
 import torch
-from Bio.SeqIO import parse
-import pandas as pd
 from multimolecule import RnaTokenizer, RiNALMoModel
 from tqdm import tqdm
+
+from rnatools.fasta import load_fasta
 
 class FeatureExtractor:
     """Extract embeddings from RNA sequences using the RiNALMo model."""
@@ -36,15 +36,9 @@ class Preprocess:
         self.fasta_path = fasta_path
         self.feature_extractor = FeatureExtractor(model_name=model_name, batch_size=batch_size)
 
-    def __load_dataset(self, fasta_path):
-        """Load sequences from a FASTA file."""
-        data = [{"id": rec.id, "sequence": str(rec.seq)} for rec in parse(fasta_path, "fasta")]
-        data = pd.DataFrame(data)
-        return data.drop_duplicates(subset=["sequence"])
-
     def transform(self):
         """Encode FASTA sequences into a feature matrix."""
-        self.df = self.__load_dataset(self.fasta_path)
+        self.df = load_fasta(self.fasta_path)
         embeddings = self.feature_extractor.transform(self.df["sequence"])
         X = np.empty((len(self.df), 1 + embeddings.shape[1]), dtype=object)
         X[:, 0] = self.df["sequence"].to_numpy()

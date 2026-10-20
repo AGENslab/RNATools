@@ -16,6 +16,7 @@ dependencies = [
     "multimolecule",
     "numpy",
     "pandas",
+    "scikit-learn",
     "torch",
     "tqdm",
 ]
@@ -29,6 +30,7 @@ dev = ["pytest"]
 
 [project.scripts]
 rnatools-rinalmo = "rnatools.cli:main"
+rnatools-kmers = "rnatools.cli:kmers"
 
 [tool.setuptools.packages.find]
 include = ["rnatools*"]
