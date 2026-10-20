@@ -1,7 +1,6 @@
 """Module for preprocessing RNA sequences for machine learning models."""
 import numpy as np
 import torch
-from itertools import islice
 from Bio.SeqIO import parse
 import pandas as pd
 from multimolecule import RnaTokenizer, RiNALMoModel
@@ -33,23 +32,19 @@ class FeatureExtractor:
 
 class Preprocess:
     """Encode RNA sequences from a FASTA file."""
-    def __init__(self, fasta_path, n=None, batch_size=32, model_name="multimolecule/rinalmo-giga"):
+    def __init__(self, fasta_path, batch_size=32, model_name="multimolecule/rinalmo-giga"):
         self.fasta_path = fasta_path
-        self.n = n
         self.feature_extractor = FeatureExtractor(model_name=model_name, batch_size=batch_size)
 
-    def __load_dataset(self, fasta_path, n=None):
+    def __load_dataset(self, fasta_path):
         """Load sequences from a FASTA file."""
-        recs = parse(fasta_path, "fasta")
-        if n is not None:
-            recs = islice(recs, n)
-        data = [{"id": rec.id, "sequence": str(rec.seq)} for rec in recs]
+        data = [{"id": rec.id, "sequence": str(rec.seq)} for rec in parse(fasta_path, "fasta")]
         data = pd.DataFrame(data)
         return data.drop_duplicates(subset=["sequence"])
 
     def transform(self):
         """Encode FASTA sequences into a feature matrix."""
-        self.df = self.__load_dataset(self.fasta_path, self.n)
+        self.df = self.__load_dataset(self.fasta_path)
         embeddings = self.feature_extractor.transform(self.df["sequence"])
         X = np.empty((len(self.df), 1 + embeddings.shape[1]), dtype=object)
         X[:, 0] = self.df["sequence"].to_numpy()

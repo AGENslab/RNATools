@@ -21,9 +21,9 @@ class FakeExtractor:
         return embeddings
 
 
-def _preprocess(monkeypatch, n=None):
+def _preprocess(monkeypatch):
     monkeypatch.setattr("rnatools.processing.FeatureExtractor", FakeExtractor)
-    return Preprocess(FASTA_PATH, n=n, batch_size=2, model_name="fake-model")
+    return Preprocess(FASTA_PATH, batch_size=2, model_name="fake-model")
 
 
 def test_transform_encodes_unique_fasta_sequences(monkeypatch):
@@ -35,12 +35,3 @@ def test_transform_encodes_unique_fasta_sequences(monkeypatch):
     assert list(preprocess.df["id"]) == ["mir-1", "mir-2", "mir-3"]
     assert X.shape == (3, 4)
     assert np.array_equal(X[:, 1:], np.arange(9, dtype=float).reshape(3, 3))
-
-
-def test_n_limits_how_many_fasta_records_are_read(monkeypatch):
-    preprocess = _preprocess(monkeypatch, n=3)
-
-    X = preprocess.transform()
-
-    assert list(X[:, 0]) == ["ACGUACGU", "GGGGCCCC"]
-    assert list(preprocess.df["id"]) == ["mir-1", "mir-2"]

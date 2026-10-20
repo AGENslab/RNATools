@@ -27,6 +27,9 @@ Repository = "https://github.com/AGENslab/RNATools"
 [project.optional-dependencies]
 dev = ["pytest"]
 
+[project.scripts]
+rnatools-rinalmo = "rnatools.cli:main"
+
 [tool.setuptools.packages.find]
 include = ["rnatools*"]
 
