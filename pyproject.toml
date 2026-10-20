@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rnatools"
+version = "0.1.0"
+description = "Library for RNA encoding and processing."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "AGENslab" }]
+requires-python = ">=3.10"
+dependencies = [
+    "biopython",
+    "multimolecule",
+    "numpy",
+    "pandas",
+    "torch",
+    "tqdm",
+]
+
+[project.urls]
+Homepage = "https://github.com/AGENslab/RNATools"
+Repository = "https://github.com/AGENslab/RNATools"
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[tool.setuptools.packages.find]
+include = ["rnatools*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
