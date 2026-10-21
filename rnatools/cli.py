@@ -2,6 +2,7 @@
 import argparse
 from pathlib import Path
 
+import h5py
 import numpy as np
 
 from rnatools.fasta import encode_fasta
@@ -28,6 +29,14 @@ def _save(path, sequences, **arrays):
     )
 
 
+def _save_embeddings(path, sequences, embeddings):
+    text = h5py.string_dtype(encoding="utf-8")
+    with h5py.File(path, "w") as handle:
+        handle.create_dataset("ids", data=np.asarray(sequences["id"], dtype=object), dtype=text)
+        handle.create_dataset("sequences", data=np.asarray(sequences["sequence"], dtype=object), dtype=text)
+        handle.create_dataset("embeddings", data=np.asarray(embeddings, dtype=np.float32), compression="gzip")
+
+
 def main(argv=None):
     """Encode sequences from a FASTA file and save the embeddings."""
     parser = argparse.ArgumentParser(
@@ -39,7 +48,7 @@ def main(argv=None):
         "-o",
         "--output",
         type=Path,
-        help="Output .npz file (default: <fasta>.rinalmo.npz)",
+        help="Output .h5 file (default: <fasta>.rinalmo.h5)",
     )
     parser.add_argument("--batch-size", type=int, default=32, help="Encoding batch size")
     parser.add_argument(
@@ -55,10 +64,10 @@ def main(argv=None):
 
     from rnatools.processing import FeatureExtractor
 
-    output = _output_path(args.fasta, args.output, ".rinalmo.npz")
+    output = _output_path(args.fasta, args.output, ".rinalmo.h5")
     encoder = FeatureExtractor(model_name=args.model_name, batch_size=args.batch_size)
     sequences, embeddings = encode_fasta(args.fasta, encoder)
-    _save(output, sequences, embeddings=np.asarray(embeddings, dtype=np.float32))
+    _save_embeddings(output, sequences, embeddings)
     print(f"Encoded {len(sequences)} sequences to {output}")
     return 0
 

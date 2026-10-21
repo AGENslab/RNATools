@@ -23,19 +23,19 @@ Both commands read a FASTA file and drop duplicate sequences.
 
 #### `rnatools-rinalmo`
 
-Writes a compressed `.npz` with `ids`, `sequences`, and `embeddings`.
+Writes an HDF5 file with `ids`, `sequences`, and `embeddings`.
 
 ```bash
-rnatools-rinalmo sequences.fasta -o embeddings.npz
+rnatools-rinalmo sequences.fasta -o embeddings.h5
 ```
 
-By default the output is `<fasta>.rinalmo.npz`. `--batch-size` controls the encoding batches.
+By default the output is `<fasta>.rinalmo.h5`. `--batch-size` controls the encoding batches.
 
 ```python
-import numpy as np
+import h5py
 
-data = np.load("embeddings.npz")
-data["ids"], data["sequences"], data["embeddings"]
+with h5py.File("embeddings.h5") as data:
+    data["ids"].asstr()[:], data["sequences"].asstr()[:], data["embeddings"][:]
 ```
 
 #### `rnatools-kmers`
